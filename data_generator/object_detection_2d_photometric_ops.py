@@ -14,11 +14,14 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+Modifications author : Paul Pontisso
 '''
 
 from __future__ import division
 import numpy as np
 import cv2
+
 
 class ConvertColor:
     '''
@@ -59,6 +62,7 @@ class ConvertColor:
         else:
             return image, labels
 
+
 class ConvertDataType:
     '''
     Converts images represented as Numpy arrays between `uint8` and `float32`.
@@ -85,6 +89,7 @@ class ConvertDataType:
         else:
             return image, labels
 
+
 class ConvertTo3Channels:
     '''
     Converts 1-channel and 4-channel images to 3-channel images. Does nothing to images that
@@ -106,6 +111,7 @@ class ConvertTo3Channels:
             return image
         else:
             return image, labels
+
 
 class Hue:
     '''
@@ -131,6 +137,7 @@ class Hue:
             return image
         else:
             return image, labels
+
 
 class RandomHue:
     '''
@@ -278,6 +285,7 @@ class RandomBrightness:
         else:
             return image, labels
 
+
 class Contrast:
     '''
     Changes the contrast of RGB images.
@@ -356,7 +364,7 @@ class Gamma:
         self.table = np.array([((i / 255.0) ** self.gamma_inv) * 255 for i in np.arange(0, 256)]).astype("uint8")
 
     def __call__(self, image, labels=None):
-        image = cv2.LUT(image, table)
+        image = cv2.LUT(image, self.table)
         if labels is None:
             return image
         else:

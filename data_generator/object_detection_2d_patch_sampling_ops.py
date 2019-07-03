@@ -14,12 +14,15 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+Modifications author : Paul Pontisso
 '''
 
 from __future__ import division
 import numpy as np
 
 from data_generator.object_detection_2d_image_boxes_validation_utils import BoundGenerator, BoxFilter, ImageValidator
+
 
 class PatchCoordinateGenerator:
     '''
@@ -218,10 +221,8 @@ class CropPad:
                  patch_xmin,
                  patch_height,
                  patch_width,
-                 clip_boxes=True,
                  box_filter=None,
-                 background=(0,0,0),
-                 labels_format={'class_id': 0, 'xmin': 1, 'ymin': 2, 'xmax': 3, 'ymax': 4}):
+                 background=(0,0,0)):
         '''
         Arguments:
             patch_ymin (int, optional): The vertical coordinate of the top left corner of the output
@@ -258,12 +259,10 @@ class CropPad:
         self.patch_width = patch_width
         self.patch_ymin = patch_ymin
         self.patch_xmin = patch_xmin
-        self.clip_boxes = clip_boxes
         self.box_filter = box_filter
         self.background = background
-        self.labels_format = labels_format
 
-    def __call__(self, image, labels=None, return_inverter=False):
+    def __call__(self, image, labels=None):
 
         img_height, img_width = image.shape[:2]
 
@@ -271,11 +270,6 @@ class CropPad:
             raise ValueError("The given patch doesn't overlap with the input image.")
 
         labels = np.copy(labels)
-
-        xmin = self.labels_format['xmin']
-        ymin = self.labels_format['ymin']
-        xmax = self.labels_format['xmax']
-        ymax = self.labels_format['ymax']
 
         # Top left corner of the patch relative to the image coordinate system:
         patch_ymin = self.patch_ymin
@@ -312,40 +306,25 @@ class CropPad:
 
         image = canvas
 
-        if return_inverter:
-            def inverter(labels):
-                labels = np.copy(labels)
-                labels[:, [ymin+1, ymax+1]] += patch_ymin
-                labels[:, [xmin+1, xmax+1]] += patch_xmin
-                return labels
-
         if not (labels is None):
 
-            # Translate the box coordinates to the patch's coordinate system.
-            labels[:, [ymin, ymax]] -= patch_ymin
-            labels[:, [xmin, xmax]] -= patch_xmin
+            # Mapping to define which indices represent which coordinates in the labels.
+            cx, cy, w, h, angle = 1, 2, 3, 4, 5
+
+            labels[:, cx] -= patch_xmin
+            labels[:, cy] -= patch_ymin
 
             # Compute all valid boxes for this patch.
             if not (self.box_filter is None):
-                self.box_filter.labels_format = self.labels_format
                 labels = self.box_filter(labels=labels,
                                          image_height=self.patch_height,
                                          image_width=self.patch_width)
 
-            if self.clip_boxes:
-                labels[:,[ymin,ymax]] = np.clip(labels[:,[ymin,ymax]], a_min=0, a_max=self.patch_height-1)
-                labels[:,[xmin,xmax]] = np.clip(labels[:,[xmin,xmax]], a_min=0, a_max=self.patch_width-1)
-
-            if return_inverter:
-                return image, labels, inverter
-            else:
-                return image, labels
+            return image, labels
 
         else:
-            if return_inverter:
-                return image, inverter
-            else:
-                return image
+            return image
+
 
 class Crop:
     '''
@@ -359,33 +338,28 @@ class Crop:
                  crop_bottom,
                  crop_left,
                  crop_right,
-                 clip_boxes=True,
-                 box_filter=None,
-                 labels_format={'class_id': 0, 'xmin': 1, 'ymin': 2, 'xmax': 3, 'ymax': 4}):
+                 box_filter=None):
+
         self.crop_top = crop_top
         self.crop_bottom = crop_bottom
         self.crop_left = crop_left
         self.crop_right = crop_right
-        self.clip_boxes = clip_boxes
         self.box_filter = box_filter
-        self.labels_format = labels_format
         self.crop = CropPad(patch_ymin=self.crop_top,
                             patch_xmin=self.crop_left,
                             patch_height=None,
                             patch_width=None,
-                            clip_boxes=self.clip_boxes,
-                            box_filter=self.box_filter,
-                            labels_format=self.labels_format)
+                            box_filter=self.box_filter)
 
-    def __call__(self, image, labels=None, return_inverter=False):
+    def __call__(self, image, labels=None):
 
         img_height, img_width = image.shape[:2]
 
         self.crop.patch_height = img_height - self.crop_top - self.crop_bottom
         self.crop.patch_width = img_width - self.crop_left - self.crop_right
-        self.crop.labels_format = self.labels_format
 
-        return self.crop(image, labels, return_inverter)
+        return self.crop(image, labels)
+
 
 class Pad:
     '''
@@ -399,32 +373,28 @@ class Pad:
                  pad_bottom,
                  pad_left,
                  pad_right,
-                 background=(0,0,0),
-                 labels_format={'class_id': 0, 'xmin': 1, 'ymin': 2, 'xmax': 3, 'ymax': 4}):
+                 background=(0,0,0)):
         self.pad_top = pad_top
         self.pad_bottom = pad_bottom
         self.pad_left = pad_left
         self.pad_right = pad_right
         self.background = background
-        self.labels_format = labels_format
         self.pad = CropPad(patch_ymin=-self.pad_top,
                            patch_xmin=-self.pad_left,
                            patch_height=None,
                            patch_width=None,
-                           clip_boxes=False,
                            box_filter=None,
-                           background=self.background,
-                           labels_format=self.labels_format)
+                           background=self.background)
 
-    def __call__(self, image, labels=None, return_inverter=False):
+    def __call__(self, image, labels=None):
 
         img_height, img_width = image.shape[:2]
 
         self.pad.patch_height = img_height + self.pad_top + self.pad_bottom
         self.pad.patch_width = img_width + self.pad_left + self.pad_right
-        self.pad.labels_format = self.labels_format
 
-        return self.pad(image, labels, return_inverter)
+        return self.pad(image, labels)
+
 
 class RandomPatch:
     '''
@@ -448,11 +418,9 @@ class RandomPatch:
                  box_filter=None,
                  image_validator=None,
                  n_trials_max=3,
-                 clip_boxes=True,
                  prob=1.0,
                  background=(0,0,0),
-                 can_fail=False,
-                 labels_format={'class_id': 0, 'xmin': 1, 'ymin': 2, 'xmax': 3, 'ymax': 4}):
+                 can_fail=False):
         '''
         Arguments:
             patch_coord_generator (PatchCoordinateGenerator): A `PatchCoordinateGenerator` object
@@ -467,9 +435,6 @@ class RandomPatch:
             n_trials_max (int, optional): Only relevant if ground truth bounding boxes are given.
                 Determines the maxmial number of trials to sample a valid patch. If no valid patch could
                 be sampled in `n_trials_max` trials, returns one `None` in place of each regular output.
-            clip_boxes (bool, optional): Only relevant if ground truth bounding boxes are given.
-                If `True`, any ground truth bounding boxes will be clipped to lie entirely within the
-                sampled patch.
             prob (float, optional): `(1 - prob)` determines the probability with which the original,
                 unaltered image is returned.
             background (list/tuple, optional): A 3-tuple specifying the RGB color value of the potential
@@ -477,9 +442,6 @@ class RandomPatch:
                 the first element of `background` will be used as the background pixel value.
             can_fail (bool, optional): If `True`, will return `None` if no valid patch could be found after
                 `n_trials_max` trials. If `False`, will return the unaltered input image in such a case.
-            labels_format (dict, optional): A dictionary that defines which index in the last axis of the labels
-                of an image contains which bounding box coordinate. The dictionary maps at least the keywords
-                'xmin', 'ymin', 'xmax', and 'ymax' to their respective indices within last axis of the labels array.
         '''
         if not isinstance(patch_coord_generator, PatchCoordinateGenerator):
             raise ValueError("`patch_coord_generator` must be an instance of `PatchCoordinateGenerator`.")
@@ -489,21 +451,17 @@ class RandomPatch:
         self.box_filter = box_filter
         self.image_validator = image_validator
         self.n_trials_max = n_trials_max
-        self.clip_boxes = clip_boxes
         self.prob = prob
         self.background = background
         self.can_fail = can_fail
-        self.labels_format = labels_format
         self.sample_patch = CropPad(patch_ymin=None,
                                     patch_xmin=None,
                                     patch_height=None,
                                     patch_width=None,
-                                    clip_boxes=self.clip_boxes,
                                     box_filter=self.box_filter,
-                                    background=self.background,
-                                    labels_format=self.labels_format)
+                                    background=self.background)
 
-    def __call__(self, image, labels=None, return_inverter=False):
+    def __call__(self, image, labels=None):
 
         p = np.random.uniform(0,1)
         if p >= (1.0-self.prob):
@@ -512,15 +470,7 @@ class RandomPatch:
             self.patch_coord_generator.img_height = img_height
             self.patch_coord_generator.img_width = img_width
 
-            xmin = self.labels_format['xmin']
-            ymin = self.labels_format['ymin']
-            xmax = self.labels_format['xmax']
-            ymax = self.labels_format['ymax']
-
-            # Override the preset labels format.
-            if not self.image_validator is None:
-                self.image_validator.labels_format = self.labels_format
-            self.sample_patch.labels_format = self.labels_format
+            cx, cy, w, h, angle = 1, 2, 3, 4, 5
 
             for _ in range(max(1, self.n_trials_max)):
 
@@ -534,59 +484,38 @@ class RandomPatch:
 
                 if (labels is None) or (self.image_validator is None):
                     # We either don't have any boxes or if we do, we will accept any outcome as valid.
-                    return self.sample_patch(image, labels, return_inverter)
+                    return self.sample_patch(image, labels)
                 else:
                     # Translate the box coordinates to the patch's coordinate system.
                     new_labels = np.copy(labels)
-                    new_labels[:, [ymin, ymax]] -= patch_ymin
-                    new_labels[:, [xmin, xmax]] -= patch_xmin
+                    new_labels[:, cy] -= patch_ymin
+                    new_labels[:, cx] -= patch_xmin
                     # Check if the patch is valid.
                     if self.image_validator(labels=new_labels,
                                             image_height=patch_height,
                                             image_width=patch_width):
-                        return self.sample_patch(image, labels, return_inverter)
+                        return self.sample_patch(image, labels)
 
             # If we weren't able to sample a valid patch...
             if self.can_fail:
                 # ...return `None`.
                 if labels is None:
-                    if return_inverter:
-                        return None, None
-                    else:
-                        return None
+                    return None
                 else:
-                    if return_inverter:
-                        return None, None, None
-                    else:
-                        return None, None
+                    return None, None
             else:
                 # ...return the unaltered input image.
                 if labels is None:
-                    if return_inverter:
-                        return image, None
-                    else:
-                        return image
-                else:
-                    if return_inverter:
-                        return image, labels, None
-                    else:
-                        return image, labels
-
-        else:
-            if return_inverter:
-                def inverter(labels):
-                    return labels
-
-            if labels is None:
-                if return_inverter:
-                    return image, inverter
-                else:
                     return image
-            else:
-                if return_inverter:
-                    return image, labels, inverter
                 else:
                     return image, labels
+
+        else:
+            if labels is None:
+                return image
+            else:
+                return image, labels
+
 
 class RandomPatchInf:
     '''
@@ -610,10 +539,8 @@ class RandomPatchInf:
                  image_validator=None,
                  bound_generator=None,
                  n_trials_max=50,
-                 clip_boxes=True,
                  prob=0.857,
-                 background=(0,0,0),
-                 labels_format={'class_id': 0, 'xmin': 1, 'ymin': 2, 'xmax': 3, 'ymax': 4}):
+                 background=(0,0,0)):
         '''
         Arguments:
             patch_coord_generator (PatchCoordinateGenerator): A `PatchCoordinateGenerator` object
@@ -633,17 +560,11 @@ class RandomPatchInf:
                 The sampler will run indefinitely until either a valid patch is found or the original image
                 is returned, but this determines the maxmial number of trials to sample a valid patch for each
                 selected pair of lower and upper bounds before a new pair is picked.
-            clip_boxes (bool, optional): Only relevant if ground truth bounding boxes are given.
-                If `True`, any ground truth bounding boxes will be clipped to lie entirely within the
-                sampled patch.
             prob (float, optional): `(1 - prob)` determines the probability with which the original,
                 unaltered image is returned.
             background (list/tuple, optional): A 3-tuple specifying the RGB color value of the potential
                 background pixels of the scaled images. In the case of single-channel images,
                 the first element of `background` will be used as the background pixel value.
-            labels_format (dict, optional): A dictionary that defines which index in the last axis of the labels
-                of an image contains which bounding box coordinate. The dictionary maps at least the keywords
-                'xmin', 'ymin', 'xmax', and 'ymax' to their respective indices within last axis of the labels array.
         '''
 
         if not isinstance(patch_coord_generator, PatchCoordinateGenerator):
@@ -657,34 +578,22 @@ class RandomPatchInf:
         self.image_validator = image_validator
         self.bound_generator = bound_generator
         self.n_trials_max = n_trials_max
-        self.clip_boxes = clip_boxes
         self.prob = prob
         self.background = background
-        self.labels_format = labels_format
         self.sample_patch = CropPad(patch_ymin=None,
                                     patch_xmin=None,
                                     patch_height=None,
                                     patch_width=None,
-                                    clip_boxes=self.clip_boxes,
                                     box_filter=self.box_filter,
-                                    background=self.background,
-                                    labels_format=self.labels_format)
+                                    background=self.background)
 
-    def __call__(self, image, labels=None, return_inverter=False):
+    def __call__(self, image, labels=None):
 
         img_height, img_width = image.shape[:2]
         self.patch_coord_generator.img_height = img_height
         self.patch_coord_generator.img_width = img_width
 
-        xmin = self.labels_format['xmin']
-        ymin = self.labels_format['ymin']
-        xmax = self.labels_format['xmax']
-        ymax = self.labels_format['ymax']
-
-        # Override the preset labels format.
-        if not self.image_validator is None:
-            self.image_validator.labels_format = self.labels_format
-        self.sample_patch.labels_format = self.labels_format
+        cx, cy, w, h, angle = 1, 2, 3, 4, 5
 
         while True: # Keep going until we either find a valid patch or return the original image.
 
@@ -714,32 +623,23 @@ class RandomPatchInf:
 
                     if (labels is None) or (self.image_validator is None):
                         # We either don't have any boxes or if we do, we will accept any outcome as valid.
-                        return self.sample_patch(image, labels, return_inverter)
+                        return self.sample_patch(image, labels)
                     else:
                         # Translate the box coordinates to the patch's coordinate system.
                         new_labels = np.copy(labels)
-                        new_labels[:, [ymin, ymax]] -= patch_ymin
-                        new_labels[:, [xmin, xmax]] -= patch_xmin
+                        new_labels[:, cy] -= patch_ymin
+                        new_labels[:, cx] -= patch_xmin
                         # Check if the patch contains the minimum number of boxes we require.
                         if self.image_validator(labels=new_labels,
                                                 image_height=patch_height,
                                                 image_width=patch_width):
-                            return self.sample_patch(image, labels, return_inverter)
+                            return self.sample_patch(image, labels)
             else:
-                if return_inverter:
-                    def inverter(labels):
-                        return labels
 
                 if labels is None:
-                    if return_inverter:
-                        return image, inverter
-                    else:
-                        return image
+                    return image
                 else:
-                    if return_inverter:
-                        return image, labels, inverter
-                    else:
-                        return image, labels
+                    return image, labels
 
 class RandomMaxCropFixedAR:
     '''
@@ -754,9 +654,7 @@ class RandomMaxCropFixedAR:
                  patch_aspect_ratio,
                  box_filter=None,
                  image_validator=None,
-                 n_trials_max=3,
-                 clip_boxes=True,
-                 labels_format={'class_id': 0, 'xmin': 1, 'ymin': 2, 'xmax': 3, 'ymax': 4}):
+                 n_trials_max=3):
         '''
         Arguments:
             patch_aspect_ratio (float): The fixed aspect ratio that all sampled patches will have.
@@ -770,30 +668,20 @@ class RandomMaxCropFixedAR:
             n_trials_max (int, optional): Only relevant if ground truth bounding boxes are given.
                 Determines the maxmial number of trials to sample a valid patch. If no valid patch could
                 be sampled in `n_trials_max` trials, returns `None`.
-            clip_boxes (bool, optional): Only relevant if ground truth bounding boxes are given.
-                If `True`, any ground truth bounding boxes will be clipped to lie entirely within the
-                sampled patch.
-            labels_format (dict, optional): A dictionary that defines which index in the last axis of the labels
-                of an image contains which bounding box coordinate. The dictionary maps at least the keywords
-                'xmin', 'ymin', 'xmax', and 'ymax' to their respective indices within last axis of the labels array.
         '''
 
         self.patch_aspect_ratio = patch_aspect_ratio
         self.box_filter = box_filter
         self.image_validator = image_validator
         self.n_trials_max = n_trials_max
-        self.clip_boxes = clip_boxes
-        self.labels_format = labels_format
         self.random_patch = RandomPatch(patch_coord_generator=PatchCoordinateGenerator(), # Just a dummy object
                                         box_filter=self.box_filter,
                                         image_validator=self.image_validator,
                                         n_trials_max=self.n_trials_max,
-                                        clip_boxes=self.clip_boxes,
                                         prob=1.0,
-                                        can_fail=False,
-                                        labels_format=self.labels_format)
+                                        can_fail=False)
 
-    def __call__(self, image, labels=None, return_inverter=False):
+    def __call__(self, image, labels=None):
 
         img_height, img_width = image.shape[:2]
 
@@ -817,8 +705,7 @@ class RandomMaxCropFixedAR:
 
         # The rest of the work is done by `RandomPatch`.
         self.random_patch.patch_coord_generator = patch_coord_generator
-        self.random_patch.labels_format = self.labels_format
-        return self.random_patch(image, labels, return_inverter)
+        return self.random_patch(image, labels)
 
 class RandomPadFixedAR:
     '''
@@ -831,32 +718,25 @@ class RandomPadFixedAR:
 
     def __init__(self,
                  patch_aspect_ratio,
-                 background=(0,0,0),
-                 labels_format={'class_id': 0, 'xmin': 1, 'ymin': 2, 'xmax': 3, 'ymax': 4}):
+                 background=(0,0,0)):
         '''
         Arguments:
             patch_aspect_ratio (float): The fixed aspect ratio that all sampled patches will have.
             background (list/tuple, optional): A 3-tuple specifying the RGB color value of the potential
                 background pixels of the scaled images. In the case of single-channel images,
                 the first element of `background` will be used as the background pixel value.
-            labels_format (dict, optional): A dictionary that defines which index in the last axis of the labels
-                of an image contains which bounding box coordinate. The dictionary maps at least the keywords
-                'xmin', 'ymin', 'xmax', and 'ymax' to their respective indices within last axis of the labels array.
         '''
 
         self.patch_aspect_ratio = patch_aspect_ratio
         self.background = background
-        self.labels_format = labels_format
         self.random_patch = RandomPatch(patch_coord_generator=PatchCoordinateGenerator(), # Just a dummy object
                                         box_filter=None,
                                         image_validator=None,
                                         n_trials_max=1,
-                                        clip_boxes=False,
                                         background=self.background,
-                                        prob=1.0,
-                                        labels_format=self.labels_format)
+                                        prob=1.0)
 
-    def __call__(self, image, labels=None, return_inverter=False):
+    def __call__(self, image, labels=None):
 
         img_height, img_width = image.shape[:2]
 
@@ -877,5 +757,4 @@ class RandomPadFixedAR:
 
         # The rest of the work is done by `RandomPatch`.
         self.random_patch.patch_coord_generator = patch_coord_generator
-        self.random_patch.labels_format = self.labels_format
-        return self.random_patch(image, labels, return_inverter)
+        return self.random_patch(image, labels)

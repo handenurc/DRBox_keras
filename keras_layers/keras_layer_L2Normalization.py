@@ -33,8 +33,7 @@ class L2Normalization(Layer):
             SSD paper.
 
     Input shape:
-        4D tensor of shape `(batch, channels, height, width)` if `dim_ordering = 'th'`
-        or `(batch, height, width, channels)` if `dim_ordering = 'tf'`.
+        4D tensor of shape `(batch, height, width, channels)`.
 
     Returns:
         The scaled tensor. Same shape as the input tensor.

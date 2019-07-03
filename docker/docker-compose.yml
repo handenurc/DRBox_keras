@@ -1,0 +1,9 @@
+version: '2.3'
+services:
+  keras-drbox:
+    build: .
+    stdin_open: true
+    tty: true
+    runtime: nvidia
+    volumes:
+     - ..:/home
