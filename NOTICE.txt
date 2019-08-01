@@ -1,8 +1,25 @@
 DRBox_keras
-
 Copyright © 2019 THALES ALENIA SPACE FRANCE. All rights reserved
 
+This software contains code derived from ssd_keras
+developed by pierluigiferrari (https://github.com/pierluigiferrari/ssd_keras).
 Copyright (C) 2018 Pierluigi Ferrari
+
+This project bundles the following dependencies under the MIT license. (https://opensource.org/licenses/MIT)
+See bundled license files for details.
+
+- keras
+- tensorflow
+
+This project bundles the following dependencies under the BSD license.
+See bundled license files for details.
+
+- matplotlib
+- numpy
+- scikit-image
+- scikit-learn
+- scipy
+- h5py
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
