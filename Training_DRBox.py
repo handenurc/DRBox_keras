@@ -55,55 +55,19 @@ n_classes = 1  # Number of positive classes
 ##################################################################################
 # Aiplanes Parameters
 ##################################################################################
-#
-# scales = [0.1, 0.14, 0.17, 0.22, 0.27, 0.34]  # The anchor boxes scaling factors
-# aspect_ratios = [[1, 1.4],
-#                  [1, 1.4],
-#                  [1, 1.4],
-#                  [1, 1.4],
-#                  [1, 1.4],
-#                  [1, 1.4]]  # The anchor boxes aspect ratios
-#
-# angles = [i * np.pi / 6 for i in range(6)]  # the anchor boxes angles
-#
-# pos_ariou_threshold = 0.4
-# neg_ariou_limit = 0.2
-#
-# # The offsets of the first anchor box center points from the top and left borders of the image as a fraction of the
-# # step size for each predictor layer.
-# offsets = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-# # The variances by which the encoded target coordinates are divided as in the original implementation os SSD
-# variances = [0.1, 0.1, 0.2, 0.2, 1]
-# # learning rate
-# lr = 0.0001
-# # l2 regularization parameter
-# l2_reg = 0
-# alpha = 1
-#
-# # Set the paths to the datasets here.
-# images_dir = 'data/Airplane/train_data/'
-#
-# train_labels_filename = "data/Airplane/labelstrain.csv"
-# val_labels_filename = "data/Airplane/labelsvalidate.csv"
-#
-# proba_no_aug = 1/3
 
-##################################################################################
-# Ships Parameters
-##################################################################################
+scales = [0.1, 0.14, 0.17, 0.22, 0.27, 0.34]  # The anchor boxes scaling factors
+aspect_ratios = [[1, 1.4],
+                 [1, 1.4],
+                 [1, 1.4],
+                 [1, 1.4],
+                 [1, 1.4],
+                 [1, 1.4]]  # The anchor boxes aspect ratios
 
-scales = [0.04, 0.08, 0.1, 0.13, 0.16, 0.2]  # The anchor boxes scaling factors
-aspect_ratios = [[ 2, 3, 4],
-                 [ 2, 3, 4],
-                 [ 2.5, 3.5],
-                 [ 2.5, 3.5],
-                 [ 2.5, 3.5],
-                 [ 2.5, 3.5]]  # The anchor boxes aspect ratios
-
-angles = [i * np.pi / 9 for i in range(9)]  # the anchor boxes angles
+angles = [i * np.pi / 6 for i in range(6)]  # the anchor boxes angles
 
 pos_ariou_threshold = 0.4
-neg_ariou_limit = 0.3
+neg_ariou_limit = 0.2
 
 # The offsets of the first anchor box center points from the top and left borders of the image as a fraction of the
 # step size for each predictor layer.
@@ -114,15 +78,51 @@ variances = [0.1, 0.1, 0.2, 0.2, 1]
 lr = 0.0001
 # l2 regularization parameter
 l2_reg = 0
-alpha = 3.0
+alpha = 1
 
 # Set the paths to the datasets here.
-images_dir = 'data/Ship/train_data/'
+images_dir = 'data/Airplane/train_data/'
 
-train_labels_filename = "data/Ship/labelstrain.csv"
-val_labels_filename = "data/Ship/labelsvalidate.csv"
+train_labels_filename = "C:\\Users\\handenur.caliskan\\Documents\\GitHub\\DRBox_keras\\train_labels.csv"
+val_labels_filename = "C:\\Users\handenur.caliskan\\Documents\\GitHub\\DRBox_keras\\validation_labels.csv"
 
-proba_no_aug = 0.5
+proba_no_aug = 1/3
+
+##################################################################################
+# Ships Parameters
+##################################################################################
+
+# scales = [0.04, 0.08, 0.1, 0.13, 0.16, 0.2]  # The anchor boxes scaling factors
+# aspect_ratios = [[ 2, 3, 4],
+#                  [ 2, 3, 4],
+#                  [ 2.5, 3.5],
+#                  [ 2.5, 3.5],
+#                  [ 2.5, 3.5],
+#                  [ 2.5, 3.5]]  # The anchor boxes aspect ratios
+
+# angles = [i * np.pi / 9 for i in range(9)]  # the anchor boxes angles
+
+# pos_ariou_threshold = 0.4
+# neg_ariou_limit = 0.3
+
+# # The offsets of the first anchor box center points from the top and left borders of the image as a fraction of the
+# # step size for each predictor layer.
+# offsets = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+# # The variances by which the encoded target coordinates are divided as in the original implementation of SSD
+# variances = [0.1, 0.1, 0.2, 0.2, 1]
+# # learning rate
+# lr = 0.0001
+# # l2 regularization parameter
+# l2_reg = 0
+# alpha = 3.0
+
+# # Set the paths to the datasets here.
+# images_dir = 'C:\\Users\\handenur.caliskan\\Documents\\GitHub\\DRBox_keras\\training_kimlik'
+
+# train_labels_filename = "C:\\Users\\handenur.caliskan\\Documents\\GitHub\\DRBox_keras\\train_labels.csv"
+# val_labels_filename = "C:\\Users\handenur.caliskan\\Documents\\GitHub\\DRBox_keras\\validation_labels.csv"
+
+# proba_no_aug = 0.5
 
 ##################################################################################
 #  Vehicles Parameters
@@ -185,9 +185,10 @@ model = drbox(image_size=(img_height, img_width, img_channels),
 # Load some weights into the model.
 # uncomment if you want to load pretrained weights
 # Set the path to the weights you want to load.
-weights_path = 'VGG_weights/VGG_ILSVRC_16_layers_fc_reduced.h5'
-if os.path.exists(weights_path):
-    model.load_weights(weights_path, by_name=True)
+
+# weights_path = 'VGG_weights/VGG_ILSVRC_16_layers_fc_reduced.h5'
+# if os.path.exists(weights_path):
+#     model.load_weights(weights_path, by_name=True)
 
 # Instantiate an Adam optimizer and the DRbox loss function and compile the model.
 

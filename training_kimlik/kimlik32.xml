@@ -1,0 +1,27 @@
+<annotation verified="no">
+  <folder>training</folder>
+  <filename>kimlik32</filename>
+  <path>C:\Users\handenur.caliskan\Documents\Kimlik_din_bilgisi_tespiti\Kimlik_train_test\training\kimlik32.jpg</path>
+  <source>
+    <database>Unknown</database>
+  </source>
+  <size>
+    <width>694</width>
+    <height>639</height>
+    <depth>3</depth>
+  </size>
+  <segmented>0</segmented>
+  <object>
+    <type>bndbox</type>
+    <name>on</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>180</xmin>
+      <ymin>114</ymin>
+      <xmax>515</xmax>
+      <ymax>552</ymax>
+    </bndbox>
+  </object>
+</annotation>
