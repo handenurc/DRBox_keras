@@ -20,7 +20,7 @@ def xml_to_csv(path):
                      int(member[5][3].text),
                      int(float(member[5][4].text)),
                      # member[1].text, # should be this if more than 1 class is possible
-                     "kimlik",
+                     1,
                      )
             xml_list.append(value)
     # column_name = ['filename', 'width', 'height', 'class', 'xmin', 'ymin', 'xmax', 'ymax']
