@@ -81,7 +81,7 @@ l2_reg = 0
 alpha = 1
 
 # Set the paths to the datasets here.
-images_dir = 'data/Airplane/train_data/'
+images_dir = 'C:\Users\handenur.caliskan\Documents\GitHub\DRBox_keras\training_kimlik_new'
 
 train_labels_filename = "C:\\Users\\handenur.caliskan\\Documents\\GitHub\\DRBox_keras\\train_labels.csv"
 val_labels_filename = "C:\\Users\handenur.caliskan\\Documents\\GitHub\\DRBox_keras\\validation_labels.csv"
