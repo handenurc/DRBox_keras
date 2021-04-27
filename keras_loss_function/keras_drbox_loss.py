@@ -21,6 +21,8 @@ Modifications author : Paul Pontisso
 from __future__ import division
 import tensorflow as tf
 
+tf.config.experimental_run_functions_eagerly(True)
+
 class DRBoxLoss:
     '''
     The DRBox loss, see https://arxiv.org/pdf/1711.09405.pdf
@@ -167,7 +169,7 @@ class DRBoxLoss:
 
         # Compute the number of negative examples we want to account for in the loss.
         # We'll keep at most `self.neg_pos_ratio` times the number of positives in `y_true`, but at least `self.n_neg_min` (unless `n_neg_loses` is smaller).
-        n_negative_keep = tf.math.minimum(tf.maximum(self.neg_pos_ratio * tf.to_int32(n_positive), self.n_neg_min), n_neg_losses)
+        n_negative_keep = tf.math.minimum(tf.maximum(self.neg_pos_ratio * tf.cast(n_positive, tf.float32), self.n_neg_min), n_neg_losses)
         
         # In the unlikely case when either (1) there are no negative ground truth boxes at all
         # or (2) the classification loss for all negative boxes is zero, return zero as the `neg_class_loss`.
@@ -205,11 +207,11 @@ class DRBoxLoss:
 
         # 4: Compute the total loss.
 
-        total_loss = (class_loss + self.alpha * loc_loss) / tf.maximum(1.0, n_positive) # In case `n_positive == 0`
+        total_loss = (tf.cast(class_loss, tf.float32) + tf.cast(self.alpha, tf.float32) * tf.cast(loc_loss, tf.float32)) / tf.cast(tf.maximum(1.0, n_positive), tf.float32) # In case `n_positive == 0`
         # Keras has the annoying habit of dividing the loss by the batch size, which sucks in our case
         # because the relevant criterion to average our loss over is the number of positive boxes in the batch
         # (by which we're dividing in the line above), not the batch size. So in order to revert Keras' averaging
         # over the batch size, we'll have to multiply by it.
-        total_loss = total_loss * tf.to_float(batch_size)
+        total_loss = total_loss * tf.cast(batch_size, tf.float32)
 
         return total_loss
