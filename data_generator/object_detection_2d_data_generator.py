@@ -612,7 +612,7 @@ class DataGenerator:
             if 'image_ids' in returns: ret.append(batch_image_ids)
             if 'original_images' in returns: ret.append(batch_original_images)
             if 'original_labels' in returns: ret.append(batch_original_labels)
-            yield ret
+            yield tuple(ret)
 
 
     def get_dataset(self):
