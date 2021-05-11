@@ -30,9 +30,9 @@ def xml_to_csv(path):
 
 
 def main():
-    image_path = os.path.join(os.getcwd(), 'training_kimlik_new')
+    image_path = os.path.join(os.getcwd(), 'training_kimlik_new_512')
     xml_df = xml_to_csv(image_path)
-    xml_df.to_csv('kimlik_labels_sadece_kimlik.csv', index=None)
+    xml_df.to_csv('kimlik_labels_sadece_kimlik_512.csv', index=None)
     print('Successfully converted xml to csv.')
 
 

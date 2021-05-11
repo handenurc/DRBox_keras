@@ -169,8 +169,9 @@ class DRBoxLoss:
 
         # Compute the number of negative examples we want to account for in the loss.
         # We'll keep at most `self.neg_pos_ratio` times the number of positives in `y_true`, but at least `self.n_neg_min` (unless `n_neg_loses` is smaller).
-        n_negative_keep = tf.math.minimum(tf.maximum(self.neg_pos_ratio * tf.cast(n_positive, tf.float32), self.n_neg_min), n_neg_losses)
-        
+        # n_negative_keep = tf.math.minimum(tf.maximum(self.neg_pos_ratio * tf.cast(n_positive, tf.float32), self.n_neg_min), n_neg_losses)
+        n_negative_keep = tf.math.minimum(tf.maximum(tf.cast(self.neg_pos_ratio,tf.int32) * tf.cast(n_positive, tf.int32), self.n_neg_min), n_neg_losses)
+
         # In the unlikely case when either (1) there are no negative ground truth boxes at all
         # or (2) the classification loss for all negative boxes is zero, return zero as the `neg_class_loss`.
         def f1():
